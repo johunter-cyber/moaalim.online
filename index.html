@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أكاديمية الأبطال - النسخة الشاملة (V7.0)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Changa:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee; --secondary: #3a0ca3; --accent: #f72585;
+            --dark: #212529; --light: #f8f9fa; --success: #10b981; --error: #ef4444; --warning: #ffbe0b;
+            --unit-tab-bg: #40c4ff;
+        }
+
+        * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, #e0f7fa 0%, #bbdefb 100%);
+            margin: 0; padding: 20px; color: var(--dark);
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            padding-bottom: 50px; direction: rtl;
+        }
+
+        header {
+            width: 100%; max-width: 1000px; text-align: center;
+            margin-bottom: 20px; padding: 15px; border-radius: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+        }
+        h1 { margin: 0; font-size: 2rem; text-shadow: 1px 1px 0 var(--accent); }
+        .score-board {
+            display: flex; justify-content: space-around; margin-top: 10px;
+            font-weight: bold; font-size: 1.1rem;
+        }
+
+        /* Tabs Navigation */
+        .nav-tabs, .unit-tabs, .sub-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; width: 100%; max-width: 1000px;}
+        .nav-btn, .unit-btn, .sub-btn {
+            background: white; border: 2px solid #ddd; padding: 8px 12px; 
+            border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 0.9rem;
+            transition: all 0.2s; box-shadow: 0 4px 0 #ccc; flex: 1; min-width: 100px;
+        }
+        .nav-btn.active, .unit-btn.active, .sub-btn.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 4px 0 #2a4ec5; transform: translateY(0);
+        }
+        .nav-btn:active, .unit-btn:active, .sub-btn:active { transform: translateY(4px); box-shadow: none; }
+        .unit-btn { background: var(--unit-tab-bg); border-color: #fff; }
+        
+        /* Workspace */
+        .workspace {
+            width: 100%; max-width: 1000px; background: white; border-radius: 20px;
+            padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); min-height: 550px; position: relative;
+        }
+
+        /* Drag & Drop Cards (V5.0 Logic) */
+        .cards-source-container {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+            padding: 15px; background-color: var(--light); border: 2px dashed var(--primary);
+            border-radius: 12px; margin-bottom: 20px; min-height: 100px; order: 2;
+        }
+        .drop-area-container {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 5px; text-align: center;
+            background-color: #e9f5e9; border: 3px solid var(--success);
+            border-radius: 12px; padding: 5px; position: relative;
+            direction: rtl; min-height: 120px; order: 1; margin-bottom: 15px;
+        }
+        .drop-slot {
+            background-color: #f0fff0; border: 1px dashed var(--success);
+            border-radius: 8px; display: flex; justify-content: center; align-items: center;
+            padding: 5px; height: 100px; position: relative;
+        }
+        .start-marker {
+            position: absolute; right: -5px; bottom: 100%;
+            padding: 5px 10px; background-color: var(--accent); color: white;
+            border-radius: 5px 5px 0 0; font-weight: bold; font-size: 0.9rem;
+        }
+        .smart-card {
+            color: white; border: 2px solid white; border-radius: 12px;
+            padding: 10px; cursor: move; transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-size: 1rem; font-weight: 700;
+            direction: ltr; min-width: 100px; height: 80px;
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            background: linear-gradient(135deg, var(--primary), #48dbfb);
+        }
+
+        .exercise-row {
+            padding: 15px; border-radius: 12px; margin-bottom: 20px;
+            border-right: 5px solid var(--secondary); background: #f8f9fa;
+        }
+        .math-display {
+            font-family: 'Changa', sans-serif; font-size: 1.4rem; direction: ltr;
+            display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;
+        }
+        .math-input {
+            width: 100px; height: 45px; border: 2px solid #b2bec3;
+            border-radius: 8px; text-align: center; font-size: 1.4rem; font-weight: bold;
+            transition: 0.3s; direction: ltr;
+        }
+        .math-input:focus { border-color: var(--primary); outline: none; background: #e0f7fa; }
+
+        /* Vertical Operations & Multiplication */
+        .vertical-grid {
+            display: inline-grid; gap: 5px;
+            background: white; padding: 20px; border: 2px solid #ddd;
+            border-radius: 15px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+            direction: ltr; font-family: 'Changa', sans-serif;
+            background-image: repeating-linear-gradient(transparent, transparent 52px, #e1f5fe 53px);
+        }
+        .v-cell { 
+            display: flex; align-items: center; justify-content: center; 
+            height: 50px; width: 50px; font-size: 2rem; font-weight: bold; 
+            color: var(--dark); position: relative; 
+        }
+        .v-cell.crossed-out { text-decoration: line-through; text-decoration-color: var(--error); text-decoration-thickness: 3px; }
+        .carry-input { 
+            width: 30px; height: 30px; border: 1px dashed #ccc; border-radius: 50%; 
+            text-align: center; font-size: 1rem; color: #777; background: #f9f9f9; 
+            position: absolute; top: -15px; right: 10px; z-index: 5;
+        }
+        .op-symbol { color: var(--accent); font-size: 2.5rem; }
+        .result-line { grid-column: 1 / -1; height: 4px; background: var(--dark); border-radius: 2px; margin: 5px 0; }
+        .result-input { 
+            width: 45px; height: 50px; border: 2px solid #b2bec3; border-radius: 8px; 
+            text-align: center; font-size: 2rem; font-weight: bold; color: var(--primary); background: white; 
+        }
+        .dot-placeholder { color: var(--error); font-size: 3rem; line-height: 0; }
+
+        /* Geometry & Grid */
+        .geo-board {
+            display: grid; gap: 3px; margin: 20px auto; width: fit-content;
+            border: 3px solid var(--secondary); background: var(--secondary);
+            padding: 5px; border-radius: 8px;
+            grid-template-columns: repeat(6, 50px);
+        }
+        .geo-cell {
+            width: 50px; height: 50px; background: white; display: flex;
+            align-items: center; justify-content: center; font-size: 1.5rem; 
+            position: relative; cursor: pointer; transition: 0.2s; border-radius: 4px;
+        }
+        .geo-cell:hover { background: #f0f0f0; }
+        .geo-cell.selected { background: #b2fab4; border: 3px solid #00b894; }
+        .geo-cell.start-point { background: #fab1a0 !important; }
+        
+        /* Fractions Visuals (Improved with Lines) */
+        .fraction-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: center; margin: 20px 0; }
+        .pie-wrapper { position: relative; width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--dark); overflow: hidden; box-shadow: 3px 3px 8px rgba(0,0,0,0.1); }
+        .pie-fill { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .pie-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; border-radius: 50%; }
+
+        /* Charts / Data */
+        .chart-container { display: flex; align-items: flex-end; height: 250px; gap: 15px; padding: 10px; border-bottom: 3px solid var(--dark); border-left: 3px solid var(--dark); margin: 30px auto; width: 80%; position: relative; direction: ltr; }
+        .chart-bar-group { display: flex; flex-direction: column; align-items: center; width: 50px; height: 100%; justify-content: flex-end; }
+        .chart-bar { width: 100%; background: linear-gradient(to top, var(--primary), #4facfe); border-radius: 5px 5px 0 0; transition: height 0.3s ease; position: relative; }
+        .bar-controls { margin-top: 10px; display: flex; gap: 5px; }
+        .ctrl-btn { width: 25px; height: 25px; border-radius: 50%; border: none; background: #ddd; font-weight: bold; cursor: pointer; }
+        .bar-value { position: absolute; top: -25px; width: 100%; text-align: center; font-weight: bold; }
+
+        /* Decomposition */
+        .decomp-box { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 1.5rem; font-family: 'Changa'; direction: ltr; margin: 20px 0;}
+        
+        .action-btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 1.5rem; font-weight: bold; color: white; cursor: pointer; margin-top: 25px; box-shadow: 0 6px 0 #3b508d; background: var(--primary); transition: all 0.1s; }
+        .action-btn:active { transform: translateY(6px); box-shadow: none; }
+        .action-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+        .feedback { text-align: center; margin-top: 15px; font-weight: bold; min-height: 25px; font-size: 1.2rem; }
+        
+        .reloading-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; border-radius: 20px; }
+        .success-animation { animation: bounce 0.5s ease-in-out; }
+        .error-animation { animation: shake 0.4s ease-in-out; }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fas fa-brain"></i> أكاديمية الأبطال (V7.0)</h1>
+        <div class="score-board">
+            <span>النقاط: <span id="score">0</span> 🌟</span>
+        </div>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="nav-btn active" onclick="switchTab('measurement')"><i class="fas fa-ruler-combined"></i> القياس</button>
+        <button class="nav-btn" onclick="switchTab('operations')"><i class="fas fa-calculator"></i> عمليات</button>
+        <button class="nav-btn" onclick="switchTab('multiplication')"><i class="fas fa-times"></i> الضرب</button>
+        <button class="nav-btn" onclick="switchTab('geometry')"><i class="fas fa-shapes"></i> الهندسة</button>
+        <button class="nav-btn" onclick="switchTab('fractions')"><i class="fas fa-chart-pie"></i> الكسور</button>
+        <button class="nav-btn" onclick="switchTab('data')"><i class="fas fa-chart-bar"></i> البيانات</button>
+        <button class="nav-btn" onclick="switchTab('comparison')"><i class="fas fa-balance-scale"></i> المقارنة</button>
+        <button class="nav-btn" onclick="switchTab('history')"><i class="fas fa-history"></i> السجل</button>
+    </div>
+    
+    <div class="unit-tabs" id="unit-tabs"></div>
+
+    <div class="workspace">
+        <div id="loading-overlay" style="display:none;" class="reloading-overlay">
+            <i class="fas fa-sync fa-spin fa-3x" style="color:var(--primary)"></i>
+            <h3>جاري إعداد تمارين جديدة...</h3>
+        </div>
+
+        <div id="measurement-view"></div>
+        <div id="operations-view" style="display: none;"></div>
+        <div id="multiplication-view" style="display: none;"></div>
+        <div id="geometry-view" style="display: none;"></div>
+        <div id="fractions-view" style="display: none;"></div>
+        <div id="data-view" style="display: none;"></div>
+        <div id="comparison-view" style="display: none;"></div>
+        <div id="history-view" style="display: none;"></div>
+    </div>
+
+<script>
+    // --- إعدادات النظام ---
+    const Units = {
+        length: { name: "الأطوال", icon: "fas fa-ruler-horizontal", headers: ['m', 'dm', 'cm', 'mm'], factors: { m: 1000, dm: 100, cm: 10, mm: 1 } },
+        capacity: { name: "السعات", icon: "fas fa-tint", headers: ['l', 'dl', 'cl', 'ml'], factors: { l: 1000, dl: 100, cl: 10, ml: 1 } },
+        mass: { name: "الأوزان", icon: "fas fa-weight-hanging", headers: ['g', 'dg', 'cg', 'mg'], factors: { g: 1000, dg: 100, cg: 10, mg: 1 } }
+    };
+
+    const Config = {
+        mode: 'measurement', 
+        subMode: 'vertical',
+        currentUnit: 'length',
+        score: 0,
+        currentBatch: [],
+        currentData: {}, 
+        history: []
+    };
+
+    window.onload = function() {
+        renderUnitTabs();
+        switchTab('measurement');
+    };
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.workspace > div:not(.reloading-overlay)').forEach(d => d.style.display = 'none');
+        document.getElementById('unit-tabs').style.display = tabName === 'measurement' ? 'flex' : 'none';
+        
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.nav-btn[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+        document.getElementById(`${tabName}-view`).style.display = 'block';
+        Config.mode = tabName;
+
+        if (tabName === 'measurement') loadMeasurement();
+        else if (tabName === 'operations') loadOperations('vertical');
+        else if (tabName === 'multiplication') loadMultiplication('lvl1');
+        else if (tabName === 'geometry') loadGeometry();
+        else if (tabName === 'fractions') loadFractions('proper');
+        else if (tabName === 'data') loadDataHandling();
+        else if (tabName === 'comparison') loadComparison();
+        else if (tabName === 'history') renderHistory();
+    }
+
+    // ==========================================
+    // 1. القياس (Original V5.0 - Restored)
+    // ==========================================
+    function switchUnit(unitType) {
+        Config.currentUnit = unitType;
+        renderUnitTabs();
+        loadMeasurement();
+    }
+
+    function renderUnitTabs() {
+        const container = document.getElementById('unit-tabs');
+        container.innerHTML = '';
+        Object.keys(Units).forEach(key => {
+            const unit = Units[key];
+            const btn = document.createElement('button');
+            btn.className = `unit-btn ${key === Config.currentUnit ? 'active' : ''}`;
+            btn.onclick = () => switchUnit(key);
+            btn.innerHTML = `<i class="${unit.icon}"></i> ${unit.name}`;
+            container.appendChild(btn);
+        });
+    }
+
+    function generateMeasurementData() {
+        const u = Units[Config.currentUnit];
+        const keys = u.headers;
+        let f1 = Math.floor(Math.random() * (keys.length - 1));
+        let t1 = Math.floor(Math.random() * (keys.length - 1 - f1)) + f1 + 1;
+        let v1 = Math.floor(Math.random() * 50) + 1;
+        let v2a = Math.floor(Math.random() * 9) + 1;
+        let v2b = Math.floor(Math.random() * 50) + 10;
+        let cards = [];
+        for(let i=0; i<5; i++) {
+            let uR = keys[Math.floor(Math.random() * keys.length)];
+            let vR = Math.floor(Math.random() * 20) + 1;
+            cards.push({ display: `${vR} ${uR}`, val: vR * u.factors[uR] });
+        }
+        return {
+            exercises: [
+                { id: 1, type: 'simple', html: `${v1} ${keys[f1]} = `, target: keys[t1], correct: v1 * (u.factors[keys[f1]]/u.factors[keys[t1]]) },
+                { id: 2, type: 'compound', html: `${v2a} ${keys[0]} + ${v2b} ${keys[2]} = `, target: keys[2], correct: (v2a*100) + v2b },
+            ],
+            sortCards: cards
+        };
+    }
+
+    function loadMeasurement() {
+        const view = document.getElementById('measurement-view');
+        const data = generateMeasurementData();
+        Config.currentBatch = data.exercises;
+        
+        let html = '';
+        data.exercises.forEach((ex, i) => {
+            html += `
+            <div class="exercise-row">
+                <p style="font-weight:bold; margin-bottom:10px;">${i+1}. أكمل التحويل:</p>
+                <div class="math-display">
+                    ${ex.html}
+                    <input type="number" class="math-input" id="inp-${ex.id}">
+                    <span>${ex.target}</span>
+                </div>
+                <div id="feed-${ex.id}" class="feedback"></div>
+            </div>`;
+        });
+
+        html += `
+        <div class="exercise-row">
+            <h3 style="color:var(--accent); text-align:center;">رتب البطاقات من الأصغر (يمين)</h3>
+            <div class="drop-area-container" id="dropArea">
+                <span class="start-marker">الأصغر</span>
+                <div class="drop-slot"></div><div class="drop-slot"></div><div class="drop-slot"></div><div class="drop-slot"></div><div class="drop-slot"></div>
+            </div>
+            <div class="cards-source-container" id="sourceArea">
+                ${data.sortCards.map(c => `<div class="smart-card" draggable="true" data-val="${c.val}">${c.display}</div>`).join('')}
+            </div>
+            <div id="sort-feedback" class="feedback"></div>
+        </div>
+        <button class="action-btn" onclick="checkMeasurementAnswers()">تصحيح ✅</button>`;
+        view.innerHTML = html;
+        initDragDrop();
+    }
+
+    function checkMeasurementAnswers() {
+        let allCorrect = true;
+        Config.currentBatch.forEach(item => {
+            let userVal = parseFloat(document.getElementById(`inp-${item.id}`).value);
+            const feed = document.getElementById(`feed-${item.id}`);
+            if(userVal === item.correct) {
+                feed.innerHTML = '✅ صحيح! أحسنت!'; feed.style.color = 'var(--success)'; feed.classList.add('success-animation'); updateScore(10);
+            } else {
+                feed.innerHTML = `❌ خطأ. الإجابة الصحيحة: ${item.correct}`; feed.style.color = 'var(--error)'; feed.classList.add('error-animation'); allCorrect = false;
+            }
+        });
+        if(!checkSorting()) allCorrect = false;
+        if(allCorrect) setTimeout(() => showReloading('measurement'), 2000);
+    }
+
+    function checkSorting() {
+        const slots = document.querySelectorAll('.drop-slot');
+        let vals = [];
+        slots.forEach(s => { if(s.children.length) vals.push(parseFloat(s.children[0].dataset.val)); });
+        if(vals.length < 5) return false;
+        let sorted = true;
+        for(let i=0; i<vals.length-1; i++) if(vals[i] > vals[i+1]) sorted = false;
+        const feed = document.getElementById('sort-feedback');
+        if(sorted) { 
+            feed.innerHTML = '✅ ترتيب ممتاز! لقد ربحت 20 نقطة!'; feed.style.color = 'var(--success)'; feed.classList.add('success-animation'); updateScore(20);
+        } else { 
+            feed.innerHTML = '❌ ترتيب خاطئ. حاول مرة أخرى'; feed.style.color = 'var(--error)'; feed.classList.add('error-animation');
+        }
+        return sorted;
+    }
+
+    // ==========================================
+    // 2. العمليات (Vertical + Decomp + Word)
+    // ==========================================
+    function loadOperations(sub) {
+        Config.subMode = sub;
+        const view = document.getElementById('operations-view');
+        
+        let html = `
+        <div class="sub-tabs">
+            <button class="sub-btn ${sub==='vertical'?'active':''}" onclick="loadOperations('vertical')">عمليات عمودية</button>
+            <button class="sub-btn ${sub==='decomp'?'active':''}" onclick="loadOperations('decomp')">تفكيك</button>
+            <button class="sub-btn ${sub==='word'?'active':''}" onclick="loadOperations('word')">وضعيات</button>
+        </div>`;
+
+        if(sub === 'vertical') {
+            const ops = [];
+            let a1 = Math.floor(Math.random() * 800) + 100;
+            let b1 = Math.floor(Math.random() * 800) + 50;
+            ops.push({ id: 'op1', type: 'vertical', op: '+', num1: a1, num2: b1, correct: a1 + b1 });
+            let a2 = Math.floor(Math.random() * 900) + 100;
+            let b2 = Math.floor(Math.random() * a2); 
+            ops.push({ id: 'op2', type: 'vertical', op: '-', num1: a2, num2: b2, correct: a2 - b2 });
+            Config.currentData.ops = ops;
+
+            ops.forEach((op, i) => {
+                const s1 = op.num1.toString().padStart(4, ' ');
+                const s2 = op.num2.toString().padStart(4, ' ');
+                const isSubtraction = op.op === '-';
+                
+                html += `<div class="exercise-row">
+                <p style="font-weight:bold;">${i+1}. أنجز عمودياً:</p>
+                <div style="display:flex; justify-content:center;">
+                    <div class="vertical-grid" style="grid-template-columns: repeat(5, 50px);">`;
+                
+                // Add carry row for subtraction
+                if(isSubtraction) {
+                    html += `<div class="v-cell"></div><div class="v-cell"><input class="carry-input" maxlength="1" placeholder="${Math.floor(a2/10)}"></div><div class="v-cell"><input class="carry-input" maxlength="1" placeholder="${Math.floor(a2/10)}"></div><div class="v-cell"><input class="carry-input" maxlength="1" placeholder="${Math.floor(a2/10)}"></div><div class="v-cell"><input class="carry-input" maxlength="1" placeholder="${Math.floor(a2/10)}"></div>`;
+                } else {
+                    html += `<div class="v-cell"></div><div class="v-cell"><input class="carry-input" maxlength="1"></div><div class="v-cell"><input class="carry-input" maxlength="1"></div><div class="v-cell"><input class="carry-input" maxlength="1"></div><div class="v-cell"><input class="carry-input" maxlength="1"></div>`;
+                }
+                
+                html += `
+                        <div class="v-cell"></div><div class="v-cell ${isSubtraction ? 'crossed-out' : ''}" onclick="toggleCrossOut(this)">${s1[0]}</div><div class="v-cell">${s1[1]}</div><div class="v-cell">${s1[2]}</div><div class="v-cell">${s1[3]}</div>
+                        <div class="v-cell op-symbol">${op.op}</div><div class="v-cell ${isSubtraction ? 'crossed-out' : ''}" onclick="toggleCrossOut(this)">${s2[0]}</div><div class="v-cell">${s2[1]}</div><div class="v-cell">${s2[2]}</div><div class="v-cell">${s2[3]}</div>
+                        <div class="result-line"></div>
+                        <div class="v-cell"></div>
+                        <div class="v-cell"><input class="result-input digit-res-${op.id}" data-idx="0" maxlength="1"></div>
+                        <div class="v-cell"><input class="result-input digit-res-${op.id}" data-idx="1" maxlength="1"></div>
+                        <div class="v-cell"><input class="result-input digit-res-${op.id}" data-idx="2" maxlength="1"></div>
+                        <div class="v-cell"><input class="result-input digit-res-${op.id}" data-idx="3" maxlength="1"></div>
+                    </div>
+                </div>
+                <div id="feed-${op.id}" class="feedback"></div></div>`;
+            });
+        } else if (sub === 'decomp') {
+            const num = Math.floor(Math.random() * 800) + 125;
+            Config.currentData.decomp = num;
+            html += `<div class="exercise-row"><h2 style="text-align:center; color:var(--primary); font-size:2.5rem; margin:10px;">${num}</h2><hr>
+                <div class="decomp-group"><p>التفكيك الجمعي:</p>
+                    <div class="decomp-box"><span>${num} = </span><input class="math-input" id="dec-1-h" placeholder="...00"><span>+</span><input class="math-input" id="dec-1-t" placeholder="..0"><span>+</span><input class="math-input" id="dec-1-u" placeholder="."></div>
+                </div>
+                <div class="decomp-group" style="margin-top:15px;"><p>التفكيك النموذجي:</p>
+                    <div class="decomp-box"><span>${num} = (</span><input class="math-input" id="dec-2-h" style="width:50px"><span>× 100) + (</span><input class="math-input" id="dec-2-t" style="width:50px"><span>× 10) + (</span><input class="math-input" id="dec-2-u" style="width:50px"><span>× 1)</span></div>
+                </div><div id="op-feedback" class="feedback"></div></div>`;
+        } else {
+            const p1 = Math.floor(Math.random() * 50) + 20;
+            const p2 = Math.floor(Math.random() * 20) + 10;
+            const isAdd = Math.random() > 0.5;
+            const text = isAdd ? `يملك أحمد ${p1} ديناراً، وأعطاه أبوه ${p2} ديناراً. كم أصبح معه؟` : `كان في الحافلة ${p1} راكباً، نزل منهم ${p2}. كم راكباً بقي؟`;
+            Config.currentData.word = isAdd ? p1 + p2 : p1 - p2;
+            html += `<div class="exercise-row" style="background:#e8f5e9;"><h3 style="margin-bottom:20px;">${text}</h3>
+                <div style="display:flex; justify-content:center; align-items:center; gap:10px;"><span>الجواب:</span><input type="number" id="word-ans" class="math-input" style="width:100px;"><span>دينار/راكب</span></div>
+                <div id="op-feedback" class="feedback"></div></div>`;
+        }
+
+        html += `<button class="action-btn" onclick="checkOperations()">تصحيح ✅</button>`;
+        view.innerHTML = html;
+        if(sub==='vertical') setupAutoMove();
+    }
+
+    function toggleCrossOut(element) {
+        element.classList.toggle('crossed-out');
+    }
+
+    function checkOperations() {
+        const mode = Config.subMode;
+        if(mode === 'vertical') {
+            Config.currentData.ops.forEach(item => {
+                let resStr = "";
+                for(let k=0; k<4; k++) { const el = document.querySelector(`.digit-res-${item.id}[data-idx="${k}"]`); if(el) resStr += el.value; }
+                let userVal = parseInt(resStr) || 0;
+                const feed = document.getElementById(`feed-${item.id}`);
+                if(userVal === item.correct) { feed.innerHTML = '✅ صحيح!'; feed.style.color = 'var(--success)'; feed.classList.add('success-animation'); }
+                else { feed.innerHTML = '❌ خطأ'; feed.style.color = 'var(--error)'; }
+            });
+            setTimeout(() => showReloading('operations'), 2000);
+        } else if (mode === 'decomp') {
+            const n = Config.currentData.decomp;
+            const h = Math.floor(n/100), t = Math.floor((n%100)/10), u = n%10;
+            const u1h = parseInt(document.getElementById('dec-1-h').value), u1t = parseInt(document.getElementById('dec-1-t').value), u1u = parseInt(document.getElementById('dec-1-u').value);
+            const u2h = parseInt(document.getElementById('dec-2-h').value), u2t = parseInt(document.getElementById('dec-2-t').value), u2u = parseInt(document.getElementById('dec-2-u').value);
+            const feed = document.getElementById('op-feedback');
+            if(u1h === h*100 && u1t === t*10 && u1u === u && u2h === h && u2t === t && u2u === u) {
+                feed.innerHTML = "✅ تفكيك ممتاز!"; feed.style.color = "var(--success)"; updateScore(15); setTimeout(() => showReloading('operations'), 2000);
+            } else { feed.innerHTML = "❌ حاول مرة أخرى."; feed.style.color = "var(--error)"; }
+        } else {
+            const ans = parseInt(document.getElementById('word-ans').value);
+            const feed = document.getElementById('op-feedback');
+            if(ans === Config.currentData.word) { feed.innerHTML = "✅ إجابة صحيحة!"; feed.style.color = "var(--success)"; updateScore(15); setTimeout(() => showReloading('operations'), 2000); }
+            else { feed.innerHTML = "❌ خطأ."; feed.style.color = "var(--error)"; }
+        }
+    }
+
+    // ==========================================
+    // 3. الكسور (Improved Visuals)
+    // ==========================================
+    function loadFractions(type) {
+        Config.subMode = type;
+        const view = document.getElementById('fractions-view');
+        let num, denom, circlesCount;
+        
+        if(type === 'proper') {
+            denom = Math.floor(Math.random() * 6) + 3;
+            num = Math.floor(Math.random() * (denom - 1)) + 1; 
+            circlesCount = 1;
+        } else {
+            denom = Math.floor(Math.random() * 4) + 3; 
+            circlesCount = Math.floor(Math.random() * 2) + 2; 
+            const fullCircles = Math.floor(Math.random() * (circlesCount - 1)) + 1;
+            const remainder = Math.floor(Math.random() * (denom - 1)) + 1;
+            num = (fullCircles * denom) + remainder;
+        }
+        Config.currentData.fraction = { num, denom };
+
+        let html = `<div class="sub-tabs"><button class="sub-btn ${type==='proper'?'active':''}" onclick="loadFractions('proper')">كسر بسيط (أصغر من 1)</button>
+        <button class="sub-btn ${type==='improper'?'active':''}" onclick="loadFractions('improper')">كسر مركب (أكبر من 1)</button></div>
+        <div class="exercise-row"><h3 style="text-align:center">اكتب الكسر الذي يمثل الجزء الملون:</h3>
+        <div class="fraction-container">`;
+
+        let remainingNum = num;
+        for(let i=0; i<circlesCount; i++) {
+            let fillAmount = Math.min(remainingNum, denom);
+            let percent = (fillAmount / denom) * 100;
+            remainingNum -= fillAmount;
+            
+            const linesGradient = `repeating-conic-gradient(from 0deg, transparent 0deg calc(360deg/${denom} - 2deg), #000 calc(360deg/${denom} - 2deg) calc(360deg/${denom}))`;
+            const fillGradient = `conic-gradient(var(--accent) 0% ${percent}%, white ${percent}% 100%)`;
+
+            html += `<div class="pie-wrapper"><div class="pie-fill" style="background: ${fillGradient}"></div><div class="pie-lines" style="background: ${linesGradient}"></div></div>`;
+        }
+        html += `</div><div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <input type="number" class="math-input" id="frac-num" placeholder="بسط"><div style="width:80px; height:4px; background:var(--dark);"></div><input type="number" class="math-input" id="frac-denom" placeholder="مقام"></div>
+        <div id="frac-feedback" class="feedback"></div></div><button class="action-btn" onclick="checkFractions()">تحقق ✅</button>`;
+        view.innerHTML = html;
+    }
+
+    function checkFractions() {
+        const d = Config.currentData.fraction;
+        const uNum = parseInt(document.getElementById('frac-num').value);
+        const uDenom = parseInt(document.getElementById('frac-denom').value);
+        const feed = document.getElementById('frac-feedback');
+        if(uNum === d.num && uDenom === d.denom) {
+            feed.innerHTML = "✅ إجابة ممتازة!"; feed.style.color = "var(--success)"; feed.classList.add("success-animation"); updateScore(15); setTimeout(() => showReloading('fractions'), 2000);
+        } else {
+            feed.innerHTML = `❌ خطأ. الكسر هو ${d.num} على ${d.denom}`; feed.style.color = "var(--error)"; feed.classList.add("error-animation");
+        }
+    }
+
+    // ==========================================
+    // 4. الهندسة (Only Coordinates - Removed Path)
+    // ==========================================
+    function loadGeometry() {
+        const view = document.getElementById('geometry-view');
+        loadGeoCoords(view);
+    }
+
+    function loadGeoCoords(view) {
+        const rows = [1, 2, 3, 4, 5, 6];
+        const cols = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
+        const shapes = [{icon: 'fa-star', color: '#f1c40f'}, {icon: 'fa-heart', color: '#e74c3c'}, {icon: 'fa-square', color: '#3498db'}];
+        let targets = [], used = new Set();
+        while(targets.length < 3) {
+            let r = Math.floor(Math.random() * 6), c = Math.floor(Math.random() * 6), key = `${r}-${c}`;
+            if(!used.has(key)) { used.add(key); targets.push({ ...shapes[targets.length], r, c, rL: rows[r], cL: cols[c] }); }
+        }
+        Config.currentData.geo = { type: 'coords', targets };
+        
+        let html = `<div class="exercise-row"><h3>حدد إحداثيات الأشكال:</h3><div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-bottom:15px;">`;
+        targets.forEach((t, i) => { html += `<div style="padding:8px; border:2px solid #eee; border-radius:8px;"><i class="fas ${t.icon}" style="color:${t.color}"></i> = ( <select id="gc-${i}">${cols.map(c=>`<option>${c}</option>`).join('')}</select> , <select id="gr-${i}">${rows.map(r=>`<option>${r}</option>`).join('')}</select> )</div>`; });
+        html += `</div><div class="geo-board" style="grid-template-columns: repeat(6, 50px);">`;
+        for(let r=0; r<6; r++) { for(let c=0; c<6; c++) { 
+            const found = targets.find(t => t.r === r && t.c === c);
+            html += `<div class="geo-cell">${found ? `<i class="fas ${found.icon}" style="color:${found.color}"></i>` : ''}</div>`;
+        }}
+        html += `</div><div id="geo-feedback" class="feedback"></div></div><button class="action-btn" onclick="checkGeometry()">تحقق ✅</button>`;
+        view.innerHTML = html;
+    }
+
+    function checkGeometry() {
+        const d = Config.currentData.geo;
+        const feed = document.getElementById('geo-feedback');
+        let correct = true;
+        
+        d.targets.forEach((t, i) => {
+            if(document.getElementById(`gc-${i}`).value !== t.cL || document.getElementById(`gr-${i}`).value != t.rL) correct = false;
+        });
+
+        if(correct) { feed.innerHTML="✅ ممتاز! إجابة دقيقة!"; feed.style.color="var(--success)"; feed.classList.add('success-animation'); updateScore(15); setTimeout(() => showReloading('geometry'), 2000); }
+        else { feed.innerHTML="❌ حاول مرة أخرى."; feed.style.color="var(--error)"; feed.classList.add('error-animation'); }
+    }
+
+    // ==========================================
+    // 5. الضرب (Multi-level with Carry Areas)
+    // ==========================================
+    function loadMultiplication(lvl) {
+        Config.subMode = lvl;
+        const view = document.getElementById('multiplication-view');
+        let n1, n2, html = `<div class="sub-tabs"><button class="sub-btn ${lvl==='lvl1'?'active':''}" onclick="loadMultiplication('lvl1')">مستوى 1</button><button class="sub-btn ${lvl==='lvl2'?'active':''}" onclick="loadMultiplication('lvl2')">مستوى 2</button></div>`;
+        
+        if(lvl === 'lvl1') {
+            n1 = Math.floor(Math.random() * 800) + 100; n2 = Math.floor(Math.random() * 8) + 2;
+            Config.currentData.mul = { n1, n2, res: n1*n2, lvl: 1 };
+            const s1 = n1.toString();
+            html += `<div class="exercise-row"><div style="display:flex; justify-content:center;"><div class="vertical-grid" style="grid-template-columns: repeat(4, 50px);">
+                <div class="v-cell"></div><div class="v-cell"></div><div class="v-cell">${s1[0]}</div><div class="v-cell">${s1[1]}</div>
+                <div class="v-cell op-symbol">×</div><div class="v-cell"></div><div class="v-cell"></div><div class="v-cell">${n2}</div>
+                <div class="result-line"></div>
+                <div class="v-cell"></div><div class="v-cell"><input class="result-input mul-res" maxlength="1" style="width:40px"></div><div class="v-cell"><input class="result-input mul-res" maxlength="1" style="width:40px"></div><div class="v-cell"><input class="result-input mul-res" maxlength="1" style="width:40px"></div>
+            </div></div><div id="mul-feedback" class="feedback"></div></div>`;
+        } else {
+            n1 = Math.floor(Math.random() * 80) + 15; n2 = Math.floor(Math.random() * 80) + 12;
+            Config.currentData.mul = { n1, n2, res: n1*n2, lvl: 2, step1: n1*(n2%10), step2: n1*Math.floor(n2/10) };
+            
+            html += `<div class="exercise-row"><div style="display:flex; justify-content:center;"><div class="vertical-grid" style="grid-template-columns: repeat(5, 45px);">`;
+            
+            // Carry row for multiplication
+            html += `<div class="v-cell"></div><div class="v-cell"><input class="carry-input" maxlength="1"></div><div class="v-cell"><input class="carry-input" maxlength="1"></div><div class="v-cell"><input class="carry-input" maxlength="1"></div><div class="v-cell"></div>`;
+            
+            html += `
+                <div class="v-cell"></div><div class="v-cell"></div><div class="v-cell"></div><div class="v-cell">${Math.floor(n1/10)}</div><div class="v-cell">${n1%10}</div>
+                <div class="v-cell op-symbol">×</div><div class="v-cell"></div><div class="v-cell"></div><div class="v-cell">${Math.floor(n2/10)}</div><div class="v-cell">${n2%10}</div>
+                <div class="result-line"></div>
+                <div class="v-cell"></div><div class="v-cell"><input class="math-input mul-s1" maxlength="1" style="width:35px"></div><div class="v-cell"><input class="math-input mul-s1" maxlength="1" style="width:35px"></div><div class="v-cell"><input class="math-input mul-s1" maxlength="1" style="width:35px"></div><div class="v-cell"><input class="math-input mul-s1" maxlength="1" style="width:35px"></div>
+                <div class="v-cell op-symbol">+</div><div class="v-cell"><input class="math-input mul-s2" maxlength="1" style="width:35px"></div><div class="v-cell"><input class="math-input mul-s2" maxlength="1" style="width:35px"></div><div class="v-cell"><input class="math-input mul-s2" maxlength="1" style="width:35px"></div><div class="v-cell dot-placeholder">.</div>
+                <div class="result-line"></div>
+                <div class="v-cell">=</div><div class="v-cell"><input class="math-input mul-final" maxlength="1" style="width:35px"></div><div class="v-cell"><input class="math-input mul-final" maxlength="1" style="width:35px"></div><div class="v-cell"><input class="math-input mul-final" maxlength="1" style="width:35px"></div><div class="v-cell"><input class="math-input mul-final" maxlength="1" style="width:35px"></div>
+            </div></div><div id="mul-feedback" class="feedback"></div></div>`;
+        }
+        html += `<button class="action-btn" onclick="checkMultiplication()">تحقق ✅</button>`;
+        view.innerHTML = html;
+    }
+
+    function checkMultiplication() {
+        const d = Config.currentData.mul;
+        const feed = document.getElementById('mul-feedback');
+        let correct = false;
+        
+        if(d.lvl === 1) {
+            let inputs = Array.from(document.querySelectorAll('.mul-res')).map(i => i.value).join('');
+            if(parseInt(inputs) === d.res) correct = true;
+        } else {
+            let s1 = parseInt(Array.from(document.querySelectorAll('.mul-s1')).map(i => i.value).join(''));
+            let s2 = parseInt(Array.from(document.querySelectorAll('.mul-s2')).map(i => i.value).join(''));
+            let fin = parseInt(Array.from(document.querySelectorAll('.mul-final')).map(i => i.value).join(''));
+            if(s1 === d.step1 && s2 === d.step2 && fin === d.res) correct = true;
+        }
+
+        if(correct) { feed.innerHTML = "✅ عملية صحيحة!"; feed.style.color = "var(--success)"; updateScore(20); setTimeout(() => showReloading('multiplication'), 2000); }
+        else { feed.innerHTML = "❌ خطأ في الحساب."; feed.style.color = "var(--error)"; }
+    }
+
+    // ==========================================
+    // 6. البيانات (Enhanced with Scenarios)
+    // ==========================================
+    function loadDataHandling() {
+        const view = document.getElementById('data-view');
+        const scenarios = [
+            { title: "عدد الطلاب في الأنشطة", items: [{name: 'كرة القدم', val: 200}, {name: 'السباحة', val: 100}, {name: 'الرسم', val: 150}] },
+            { title: "بيع الخضار في السوق", items: [{name: 'طماطم', val: 180}, {name: 'خيار', val: 120}, {name: 'بطاطا', val: 90}] },
+            { title: "أعداد الكتب المقروءة", items: [{name: 'قصص', val: 160}, {name: 'علوم', val: 140}, {name: 'تاريخ', val: 100}] }
+        ];
+        const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+        Config.currentData.chart = scenario.items;
+
+        let html = `<div class="exercise-row"><h3 style="text-align:center">${scenario.title}</h3>
+        <table style="width:100%; border-collapse:collapse; text-align:center; margin-bottom:10px;">
+            <tr style="background:#ddd;"><th>الفئة</th><th>العدد</th></tr>
+            ${scenario.items.map(i => `<tr><td>${i.name}</td><td><b>${i.val}</b></td></tr>`).join('')}
+        </table>
+        <div class="chart-container">
+            <div style="position:absolute; right:-40px; top:0; height:100%; display:flex; flex-direction:column; justify-content:space-between; font-size:0.8rem; color:#666;"><span>250</span><span>200</span><span>150</span><span>100</span><span>50</span><span>0</span></div>
+            ${scenario.items.map((item, idx) => `
+            <div class="chart-bar-group" style="flex:1;">
+                <div class="bar-value" id="val-display-${idx}">0</div>
+                <div class="chart-bar" id="bar-${idx}" style="height:0%;" data-val="0"></div>
+                <div class="bar-controls"><button class="ctrl-btn" onclick="adjustBar(${idx}, 50)">+</button><button class="ctrl-btn" onclick="adjustBar(${idx}, -50)">-</button></div>
+                <div style="margin-top:5px; font-size:0.8rem;">${item.name}</div>
+            </div>`).join('')}
+        </div><div id="data-feedback" class="feedback"></div></div><button class="action-btn" onclick="checkData()">تحقق ✅</button>`;
+        view.innerHTML = html;
+    }
+
+    function adjustBar(idx, val) {
+        const bar = document.getElementById(`bar-${idx}`);
+        const disp = document.getElementById(`val-display-${idx}`);
+        let curr = parseInt(bar.dataset.val);
+        let next = curr + val;
+        if(next >= 0 && next <= 250) {
+            bar.dataset.val = next;
+            bar.style.height = `${(next/250)*100}%`;
+            disp.innerText = next;
+        }
+    }
+
+    function checkData() {
+        const target = Config.currentData.chart;
+        let correct = true;
+        target.forEach((item, idx) => { if(parseInt(document.getElementById(`bar-${idx}`).dataset.val) !== item.val) correct = false; });
+        const feed = document.getElementById('data-feedback');
+        if(correct) { feed.innerHTML = "✅ مخطط دقيق!"; feed.style.color = "var(--success)"; updateScore(20); setTimeout(() => showReloading('data'), 2000); }
+        else { feed.innerHTML = "❌ تأكد من ارتفاع الأعمدة."; feed.style.color = "var(--error)"; }
+    }
+
+    // ==========================================
+    // 7. المقارنة (Enhanced with Conversion Challenges)
+    // ==========================================
+    function loadComparison() {
+        const view = document.getElementById('comparison-view');
+        
+        const types = ['numbers', 'conversion'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
+        let correctOp, displayLeft, displayRight;
+        
+        if (type === 'conversion') {
+            const units = ['length', 'capacity', 'mass'];
+            const unitKey = units[Math.floor(Math.random() * units.length)];
+            const unit = Units[unitKey];
+            
+            const headers = unit.headers;
+            const idx1 = Math.floor(Math.random() * headers.length);
+            let idx2 = Math.floor(Math.random() * headers.length);
+            while(idx2 === idx1) idx2 = Math.floor(Math.random() * headers.length);
+            
+            const val1 = Math.floor(Math.random() * 50) + 1;
+            const val2 = Math.floor(Math.random() * 50) + 1;
+            
+            const val1InBase = val1 * unit.factors[headers[idx1]];
+            const val2InBase = val2 * unit.factors[headers[idx2]];
+            
+            if (val1InBase > val2InBase) correctOp = '>';
+            else if (val1InBase < val2InBase) correctOp = '<';
+            else correctOp = '=';
+            
+            displayLeft = `${val1} ${headers[idx1]}`;
+            displayRight = `${val2} ${headers[idx2]}`;
+            
+        } else {
+            const n1 = Math.floor(Math.random() * 99) + 1;
+            
+            const isAdd = Math.random() > 0.5;
+            let op1, op2, opResult;
+            
+            if (isAdd) {
+                op1 = Math.floor(Math.random() * 50) + 1;
+                op2 = Math.floor(Math.random() * 50) + 1;
+                opResult = op1 + op2;
+            } else {
+                op1 = Math.floor(Math.random() * 50) + 20;
+                op2 = Math.floor(Math.random() * op1);
+                opResult = op1 - op2;
+            }
+            
+            if (Math.random() > 0.5) {
+                displayLeft = n1.toString();
+                displayRight = `(${op1} ${isAdd ? '+' : '-'} ${op2})`;
+                correctOp = n1 > opResult ? '>' : n1 < opResult ? '<' : '=';
+            } else {
+                displayLeft = `(${op1} ${isAdd ? '+' : '-'} ${op2})`;
+                displayRight = n1.toString();
+                correctOp = opResult > n1 ? '>' : opResult < n1 ? '<' : '=';
+            }
+        }
+        
+        Config.currentData.comp = { correctOp, displayLeft, displayRight };
+        
+        view.innerHTML = `<div class="exercise-row"><h3 style="text-align:center">أختار الرمز المناسب:</h3>
+        <div class="math-display" style="justify-content:center; gap:20px; font-size:2.5rem;"><span>${displayLeft}</span>
+        <select class="math-input" id="comp-op" style="width:80px; height:60px; font-size:2rem;"><option value="">?</option><option value=">">></option><option value="<"><</option><option value="=">=</option></select>
+        <span>${displayRight}</span></div><div id="comp-feedback" class="feedback"></div></div><button class="action-btn" onclick="checkComparison()">تحقق ✅</button>`;
+    }
+
+    function checkComparison() {
+        const d = Config.currentData.comp;
+        const feed = document.getElementById('comp-feedback');
+        if(document.getElementById('comp-op').value === d.correctOp) {
+            feed.innerHTML = '✅ صحيح! إجابة ممتازة!'; feed.style.color = 'var(--success)'; feed.classList.add('success-animation'); updateScore(15);
+            setTimeout(() => showReloading('comparison'), 2000);
+        } else { 
+            feed.innerHTML = `❌ خطأ. حاول مرة أخرى.`; feed.style.color = 'var(--error)'; feed.classList.add('error-animation');
+        }
+    }
+
+    // ==========================================
+    // Helpers (DragDrop, Reload, Score)
+    // ==========================================
+    function initDragDrop() {
+        let dragged = null;
+        document.querySelectorAll('.smart-card').forEach(c => {
+            c.addEventListener('dragstart', function() { dragged = this; this.style.opacity='0.5'; });
+            c.addEventListener('dragend', function() { dragged = null; this.style.opacity='1'; });
+        });
+        document.querySelectorAll('.drop-slot, #sourceArea').forEach(area => {
+            area.addEventListener('dragover', e => e.preventDefault());
+            area.addEventListener('drop', function(e) { e.preventDefault(); if(dragged && (this.id === 'sourceArea' || this.children.length === 0)) this.appendChild(dragged); });
+        });
+    }
+
+    function setupAutoMove() {
+        document.querySelectorAll('input[maxlength="1"]').forEach(inp => {
+            inp.addEventListener('input', function() { if(this.value.length >= this.maxLength) {} });
+        });
+    }
+
+    function updateScore(p) { Config.score += p; document.getElementById('score').innerText = Config.score; addToHistory(p); }
+    function addToHistory(p) {
+        const now = new Date();
+        Config.history.unshift({ date: now.toLocaleDateString('ar-DZ'), time: now.toLocaleTimeString('ar-DZ'), mode: Config.mode, points: p });
+        if(Config.history.length > 20) Config.history.pop();
+    }
+    function renderHistory() {
+        const view = document.getElementById('history-view');
+        let html = '<h2 style="text-align:center;">السجل</h2><div style="max-height:400px; overflow-y:auto;">';
+        Config.history.forEach((h, i) => { html += `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;"><span>${h.date} ${h.time}</span><span>${h.mode}</span><span style="color:green">+${h.points}</span></div>`; });
+        html += '</div>'; view.innerHTML = html;
+    }
+    function showReloading(mode, callback) {
+        const overlay = document.getElementById('loading-overlay'); overlay.style.display='flex';
+        setTimeout(() => { overlay.style.display='none'; switchTab(mode); if(callback) callback(); }, 1200);
+    }
+</script>
+</body>
+</html>
